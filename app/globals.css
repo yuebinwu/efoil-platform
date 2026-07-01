@@ -1,0 +1,25 @@
+/* 如果你是 Tailwind CSS v4，這樣寫是正確的 */
+@import "tailwindcss";
+
+@media print {
+  /* 隱藏全站的 Header/Navbar */
+  header, 
+  nav, 
+  .navbar, 
+  .header-container {
+    display: none !important;
+  }
+
+  /* 隱藏全站的 Footer */
+  footer, 
+  .footer-container {
+    display: none !important;
+  }
+
+  /* 確保報告本體在列印時保持完整 */
+  body, main {
+    margin: 0 !important;
+    padding: 0 !important;
+    background: white !important;
+  }
+}
