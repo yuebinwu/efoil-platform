@@ -1,7 +1,6 @@
 import { supabase } from '@/lib/supabase';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
-import { STORAGE_BASE_URL } from '@/lib/constants';
 
 export default async function FoilDetailPage({ params }: { params: { slug: string } }) {
   // 這裡的 slug 就是從網址接收到的 item.name

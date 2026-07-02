@@ -14,7 +14,7 @@ export default function AboutPage() {
         <section>
           <h2 className="text-2xl font-bold mb-4">我們的使命</h2>
           <p className="text-gray-600 leading-relaxed text-lg">
-            從電機研發到電池系統的優化，我們堅持自主開發，確保每一個組件都能達到專業級的耐用度與性能。E-FOIL 不僅是一項運動器材，更是你探索海洋的全新載具。
+            **從電機研發到電池系統的優化，我們堅持自主開發，確保每一個組件都能達到專業級的耐用度與性能。E-FOIL 不僅是一項運動器材，更是你探索海洋的全新載具。
           </p>
         </section>
 

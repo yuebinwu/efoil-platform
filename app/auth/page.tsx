@@ -41,7 +41,7 @@ export default function AuthPage() {
         <p className="text-center text-gray-500">
           {isLogin ? "還沒有帳戶？" : "已經有帳戶？"}
           <button onClick={() => setIsLogin(!isLogin)} className="ml-2 text-black font-bold underline">
-            {isLogin ? "立即註冊" : "立即登入"}
+            {isLogin ? "立即註冊！" : "立即登入"}
           </button>
         </p>
       </div>

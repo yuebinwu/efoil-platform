@@ -25,7 +25,7 @@ export default async function MotorsPage() {
               href={`/motors/${encodeURIComponent(item.name)}`} 
               className="block bg-black text-white text-center py-2 px-4 rounded hover:bg-gray-800 transition"
             >
-              立即購買
+              ！立即購買
             </Link>
           </div>
         ))}
