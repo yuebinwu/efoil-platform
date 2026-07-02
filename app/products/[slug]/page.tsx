@@ -1,3 +1,5 @@
+//  vercel布置检测的要求
+
 'use client'
 
 import { useState } from 'react';
@@ -18,22 +20,31 @@ export default function ProductPage({ params }: { params: { slug: string } }) {
   }
 
   // 下單處理函數
-  const handlePurchase = async () => {
-    setLoading(true);
-    try {
-      await createOrderAction({ 
-        items: { name: product.name }, 
-        total_amount: product.price, 
-        user_id: null 
-      });
-      alert('下單成功！');
-    } catch (err) {
-      console.error(err);
-      alert('下單失敗');
-    } finally {
-      setLoading(false);
-    }
-  };
+    const handlePurchase = async () => {
+      setLoading(true);
+      try {
+        const formData = new FormData();
+        
+        // 确保 items 包含 name: product.name
+        // 将对象序列化为 JSON 字符串存入 FormData
+        const itemsData = [{ 
+            name: product.name, 
+            price: product.price 
+        }];
+        
+        formData.append('items', JSON.stringify(itemsData));
+        formData.append('total_amount', product.price.toString());
+        formData.append('user_id', ''); 
+
+        await createOrderAction(formData);
+        alert('下单成功！');
+      } catch (err) {
+        console.error(err);
+        alert('下单失败');
+      } finally {
+        setLoading(false);
+      }
+    };
 
   return (
     <div className="max-w-4xl mx-auto p-8">
