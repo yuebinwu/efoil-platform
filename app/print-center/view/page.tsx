@@ -1,40 +1,38 @@
 import { createClient } from '@/lib/supabase-server';
-import InvoiceTemplate from '@/components/templates/InvoiceTemplate';
-import OwnershipTemplate from '@/components/templates/OwnershipTemplate';
 import TransferTemplate from '@/components/templates/TransferTemplate';
+import InvoiceTemplate from '@/components/templates/InvoiceTemplate'; // 记得引入
 
 export default async function ViewPage({ 
   searchParams 
 }: { 
   searchParams: Promise<{ id: string; type: string }> 
 }) {
-  const { id, type } = await searchParams;
+  const params = await searchParams;
+  const { id, type } = params;
+  
   const supabase = await createClient();
   
-  const table = type === 'repair' ? 'repairs' : 'orders'; 
-  const { data, error } = await supabase.from(table).select('*').eq('id', id).single();
+  // 使用关联查询显式获取 profiles
+  const { data, error } = await supabase
+    .from(type === 'transfer' ? 'transfers' : 'orders')
+    .select(`
+      *,
+      profiles ( full_name, phone, street_address, city, state, postal_code, remarks )
+    `)
+    .eq('id', id.trim())
+    .single();
 
-  if (error || !data) return <div>找不到文件</div>;
-
-  // 渲染函數，使用型別安全的方式傳遞 data
-  const renderTemplate = () => {
-    // 這裡的 data 會被視為 any，因為來自 supabase 的動態數據結構不固定
-    // 如果您需要更嚴格的類型，建議在每個模板中定義 interface
-    switch (type) {
-      case 'invoice': 
-        return <InvoiceTemplate data={data as any} />;
-      case 'title': 
-        return <OwnershipTemplate data={data as any} />;
-      case 'transfer': 
-        return <TransferTemplate data={data as any} />;
-      default: 
-        return <div>文件類型錯誤</div>;
-    }
-  };
+  if (error || !data) {
+    return <div className="p-10 text-center">無法找到記錄 (ID: {id})</div>;
+  }
 
   return (
     <div className="min-h-screen bg-gray-200">
-      {renderTemplate()}
+      {type === 'transfer' ? (
+        <TransferTemplate data={data} />
+      ) : (
+        <InvoiceTemplate data={data} />
+      )}
       <script dangerouslySetInnerHTML={{ __html: `window.print();` }} />
     </div>
   );

@@ -1,7 +1,7 @@
-// checkout/page.tsx 所有提交购买的操作经过本文件，订单插入数据库orders表  2026-6-28 調試成功--跳轉--填寫--成功
+// checkout/page.tsx 订单插入数据库orders表  2026-7-2
 'use client'
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { createBrowserClient } from '@supabase/ssr';
 import { useSearchParams } from 'next/navigation';
 
@@ -10,7 +10,7 @@ const supabase = createBrowserClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
 
-export default function CheckoutPage() {
+function CheckoutContent() {
   const searchParams = useSearchParams();
   const productName = searchParams.get('product');
 
@@ -19,10 +19,12 @@ export default function CheckoutPage() {
 
   useEffect(() => {
     async function fetchProduct() {
-      if (!productName) return;
+      if (!productName) {
+        setLoading(false);
+        return;
+      }
       
-      // 查詢所有同名產品，但必須是 'available' 的
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from('products')
         .select('name, price, description, image_url, uid, quantity, status')
         .eq('name', productName)
@@ -47,7 +49,6 @@ export default function CheckoutPage() {
       return;
     }
 
-    // 取得第一個可用的產品項
     const targetItem = product.all_items.find((item: any) => item.status === 'available');
     
     // 1. 寫入訂單
@@ -74,7 +75,7 @@ export default function CheckoutPage() {
       alert("庫存扣除失敗: " + updateError.message);
     } else {
       alert("下單成功！");
-      window.location.reload(); // 重新整理頁面，庫存數會自動減 1
+      window.location.reload();
     }
   }
 
@@ -92,9 +93,22 @@ export default function CheckoutPage() {
           <p className="text-xl text-gray-700 mb-2">總庫存: {product.total_quantity}</p>
           <p className="text-2xl font-bold mb-4">價格: {product.price}</p>
           <p className="text-gray-600 mb-8">{product.description}</p>
-          <button className="bg-black text-white px-12 py-3 rounded hover:bg-gray-800" onClick={handlePurchase}>確認下單</button>
+          <button 
+            className="bg-black text-white px-12 py-3 rounded hover:bg-gray-800 transition-colors" 
+            onClick={handlePurchase}
+          >
+            確認下單
+          </button>
         </div>
       </div>
     </div>
+  );
+}
+
+export default function CheckoutPage() {
+  return (
+    <Suspense fallback={<div className="p-10 text-center">載入中...</div>}>
+      <CheckoutContent />
+    </Suspense>
   );
 }

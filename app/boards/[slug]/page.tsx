@@ -1,46 +1,62 @@
 // app/boards/[slug]/page.tsx   2026-6-28 調試成功--跳轉--填寫--成功
 import { createClient } from '@/lib/supabase-server'; 
 import Link from 'next/link';
+
 export default async function BoardDetailPage({ params }: { params: { slug: string } }) {
   const { slug } = await params;
   const supabase = await createClient();
 
-  // 1. 資料獲取區 (結構清晰)
-  const { data: board } = await supabase
+  const { data: boards, error } = await supabase
     .from('products')
     .select('*')
-    .eq('name', decodeURIComponent(slug))
-    .single();
+    .eq('name', decodeURIComponent(slug));
 
-  if (!board) return <div>找不到產品</div>;
+  if (error || !boards || boards.length === 0) {
+    return <div className="p-10 text-center text-red-500">找不到產品或資料讀取錯誤</div>;
+  }
 
-  // 2. 圖片處理 (獲取 Public URL)
+  // 确保库存逻辑一致：只计算 available 状态的库存
+  const totalAvailableQuantity = boards.reduce((sum, b) => {
+    return b.status === 'available' ? sum + (b.quantity || 0) : sum;
+  }, 0);
+
+  const board = boards[0];
   const { data: imageData } = supabase.storage
     .from('product-images')
     .getPublicUrl(`public/${board.name}.jpg`);
 
-  // 3. 渲染區 (結構清晰，容易維護)
   return (
     <div className="max-w-6xl mx-auto p-10 grid grid-cols-1 md:grid-cols-2 gap-10">
-      {/* 左側圖片區 */}
       <div>
         <img src={imageData.publicUrl} alt={board.name} className="w-full rounded-lg shadow-lg" />
       </div>
 
-      {/* 右側資訊區 */}
-      <div>
+      <div className="flex flex-col">
         <h1 className="text-4xl font-bold mb-4">{board.name}</h1>
-        <p className="text-gray-600 mb-6">{board.description || "暫無描述"}</p>
+        <p className="text-gray-600 mb-6">{board.description || "暫無詳細描述"}</p>
+        
+        {/* 显示库存 */}
+        <div className="text-xl mb-4 font-semibold text-gray-800">
+           庫存數量: {totalAvailableQuantity > 0 ? totalAvailableQuantity : <span className="text-red-500">已售罄</span>}
+        </div>
+
         <div className="text-2xl font-bold text-blue-600 mb-6">
             價格: ${board.price || "請諮詢"}
         </div>
+        
+        {/* 统一改为跳转到 /checkout 页 */}
+        {totalAvailableQuantity > 0 ? (
           <Link 
-            // 建議：使用 board.name 作為傳遞參數，這通常是資料庫中的唯一識別碼
             href={`/checkout?product=${encodeURIComponent(board.name)}`} 
-            className="bg-black text-white px-6 py-3 rounded-lg hover:bg-gray-800 transition"
+            className="bg-black text-white px-6 py-3 rounded-lg hover:bg-gray-800 transition text-center"
           >
             立即購買
           </Link>
+        ) : (
+          <button disabled className="bg-gray-400 text-white px-6 py-3 rounded-lg cursor-not-allowed">
+            已售罄
+          </button>
+        )}
       </div>
     </div>
   );

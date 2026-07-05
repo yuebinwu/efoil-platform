@@ -35,7 +35,7 @@
     ".next/dev/types/**/*.ts",
     "next.config.mjs",
     "middleware.ts"
-  ],
+, "app/dashboard/admin/layout.tsx.bak", "app/dashboard/admin/page.tsx.bak"  ],
   "exclude": [
     "node_modules"
   ]

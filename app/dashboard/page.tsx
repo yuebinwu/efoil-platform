@@ -1,10 +1,13 @@
+//2026-7-3去掉三目计算，测试正常
 'use client';
 
 import { useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabase-client';
+import { User } from '@supabase/supabase-js'; // 导入 Supabase 的 User 类型
 
 export default function DashboardPage() {
-  const [user, setUser] = useState<any>(null);
+  // 使用 User 类型明确定义状态，初始值为 null
+  const [user, setUser] = useState<User | null>(null);
   const supabase = createClient();
 
   useEffect(() => {

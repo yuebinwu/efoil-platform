@@ -1,7 +1,17 @@
+//
 'use client';
 
 import { useState, useEffect } from 'react';
 import { createBrowserClient } from '@supabase/ssr';
+
+interface Order {
+  id: string;
+  user_id: string;
+  items: {
+    name: string;
+    uid: string;
+  };
+}
 
 export default function RepairRequestPage({ params }: { params: { id: string } }) {
   const supabase = createBrowserClient(
@@ -9,7 +19,7 @@ export default function RepairRequestPage({ params }: { params: { id: string } }
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   );
 
-  const [order, setOrder] = useState<any>(null);
+  const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -17,24 +27,24 @@ export default function RepairRequestPage({ params }: { params: { id: string } }
       .select('id, user_id, items')
       .eq('id', params.id)
       .single()
-      .then(({ data }) => setOrder(data));
+      .then(({ data }) => setOrder(data as Order));
   }, [params.id]);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (!order) return;
     setLoading(true);
+    
     const formData = new FormData(e.currentTarget);
 
     const { error } = await supabase.from('repairs').insert({
       user_id: order.user_id,
       product_name: order.items.name,
-      uid: order.items.uid, // 核心 UID
-      description: formData.get('description'),
-      phone: formData.get('phone'), // 對應資料庫欄位
-      address: formData.get('address'), // 對應資料庫欄位
-      status: 'Pending',
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
+      uid: order.items.uid,
+      description: formData.get('description') as string,
+      phone: formData.get('phone') as string,
+      address: formData.get('address') as string,
+      status: 'Pending'
     });
 
     if (error) {
@@ -52,7 +62,6 @@ export default function RepairRequestPage({ params }: { params: { id: string } }
     <div className="max-w-2xl mx-auto p-8">
       <h1 className="text-2xl font-bold mb-6">填寫維修申請單</h1>
       
-      {/* 產品諮詢區 */}
       <div className="bg-gray-50 p-4 border rounded mb-6">
         <p className="text-sm text-gray-500">產品綁定資訊</p>
         <p className="font-bold text-lg">{order.items.name}</p>
