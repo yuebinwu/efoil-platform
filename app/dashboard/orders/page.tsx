@@ -5,22 +5,28 @@ import { useState, useEffect } from 'react';
 import { createBrowserClient } from '@supabase/ssr';
 import Link from 'next/link';
 
-// 定义订单数据的强类型接口
+// 1. 明确定义产品项结构，不再使用 any
+interface OrderItem {
+  name: string;
+  description?: string;
+  uid?: string;
+  unit_price?: number;
+}
+
+// 2. 定义订单数据的强类型接口
 interface Order {
-      id: string;
-      uid: string;
-      user_id:string;
-      unit_price: number;
-      quantity: number;
-      created_at: string;
-      status: 'pending' | 'sold';
-      items?: {
-        name: string;
-      };
-    }
+  id: string;
+  uid: string;
+  user_id: string;
+  unit_price: number;
+  quantity: number;
+  created_at: string;
+  status: 'pending' | 'sold';
+  // 明确 items 的类型，通过联合类型兼容两种数据结构
+  items?: OrderItem[] | OrderItem;
+}
 
 export default function OrderListPage() {
-  // 替换 any，使用 Order[] 类型
   const [orders, setOrders] = useState<Order[]>([]);
   
   const supabase = createBrowserClient(
@@ -28,23 +34,21 @@ export default function OrderListPage() {
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   );
 
-useEffect(() => {
+  useEffect(() => {
     async function fetchData() {
-      // 1. 直接获取所有数据，不做任何 user_id 过滤
-      // 确保 items 表联查的字段名是正确的 (items!inner 或者 items)
       const { data, error } = await supabase
         .from('orders')
-          .select(`
-            id,
-            uid,
-            user_id,
-            unit_price,
-            quantity,
-            created_at,
-            status,
-            items
-          `)
-        .order('status', { ascending: true }); // 只做排序
+        .select(`
+          id,
+          uid,
+          user_id,
+          unit_price,
+          quantity,
+          created_at,
+          status,
+          items
+        `)
+        .order('status', { ascending: true });
 
       if (error) {
         console.error("数据加载错误:", error);
@@ -52,13 +56,26 @@ useEffect(() => {
       }
 
       if (data) {
-        console.log("成功抓取数据:", data); // 调试用，右键点检查-控制台查看
+        // 强制转换类型，确保符合 Order[] 接口
         setOrders(data as Order[]);
       }
     }
 
     fetchData();
   }, [supabase]);
+
+  // 3. 安全提取名称的函数，完全没有 any
+  const getProductName = (items: Order['items']): string => {
+    if (!items) return '';
+    
+    // 如果 items 是数组，访问第一个元素
+    if (Array.isArray(items)) {
+      return items[0]?.name ?? '';
+    }
+    
+    // 如果 items 是单个对象，直接访问 name
+    return items.name ?? '';
+  };
 
   return (
     <div className="p-8">
@@ -81,7 +98,7 @@ useEffect(() => {
           {orders.map((order) => (
             <tr key={order.id}>
               <td className="border p-2">{order.id.slice(0, 8)}</td>
-              <td className="border p-2">{order.items?.name}</td>
+              <td className="border p-2">{getProductName(order.items)}</td>
               <td className="border p-2 text-blue-600">{order.uid}</td>
               <td className="border p-2">${order.unit_price}</td>
               <td className="border p-2">{order.quantity}</td>

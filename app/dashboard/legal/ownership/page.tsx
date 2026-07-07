@@ -1,118 +1,76 @@
-'use client';
+import { createClient } from '@/utils/supabase/server';
+import Link from 'next/link';
 
-import { useEffect, useState } from 'react';
-import { createBrowserClient } from '@supabase/ssr';
+export default async function OwnershipPage() {
+  const supabase = createClient();
 
-// 1. 定义产品项的接口 (对应 items 字段的结构)
-interface OrderItem {
-  name: string;
-  model: string;
-  description?: string;
-  unit_price: number;
-  quantity: number;
-  uid?: string;
-}
+  const { data: orders, error } = await supabase
+    .from('orders')
+    .select('*')
+    .order('created_at', { ascending: false });
 
-// 2. 定义订单数据的强类型接口
-interface Order {
-  id: string;
-  created_at: string;
-  status: string;
-  uid?: string;
-  items: OrderItem | string; // 处理可能是 string 或 object 的情况
-  unit_price?: number;  // <--- 补上这一行，波浪线就会消失
-}
-
-export default function OwnershipPage() {
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  const supabase = createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  );
-
-  useEffect(() => {
-    const fetchOrders = async () => {
-      setLoading(true);
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        setLoading(false);
-        return;
-      }
-
-      // 3. 规范化查询：添加排序逻辑
-      const { data, error } = await supabase
-        .from('orders')
-        .select('*')
-        //.eq('user_id', user.id)
-        .order('created_at', { ascending: false });
-
-      if (error) {
-        console.error("加载数据错误:", error);
-      } else if (data) {
-        setOrders(data as Order[]);
-      }
-      setLoading(false);
-    };
-    fetchOrders();
-  }, [supabase]);
-
-  if (loading) return <div className="p-8">載入中...</div>;
+  if (error) return <div className="p-10 text-red-500">Error: {error.message}</div>;
 
   return (
-    <div className="p-8">
+    <div className="flex-1 p-8">
       <h1 className="text-2xl font-bold mb-6">產權證明管理</h1>
       
-      {orders.length === 0 ? (
-        <div className="p-10 text-center text-gray-500 border rounded">暫無數據</div>
-      ) : (
-        <table className="w-full text-left border border-collapse">
+      <div className="overflow-x-auto">
+        <table className="w-full border-collapse border border-gray-300">
           <thead>
-            <tr className="bg-gray-50 border-b">
-              <th className="p-4 border">訂單編號</th>
-              <th className="p-4 border">產品名稱</th>
-              <th className="p-4 border">型號</th>
-              
-              <th className="p-4 border">唯一UID</th>
-              <th className="p-4 border">價格</th>
-              <th className="p-4 border">數量</th>
-              <th className="p-4 border">購入時間</th>
-              <th className="p-4 border">狀態</th>
-              <th className="p-4 border text-center">操作</th>
+            <tr className="bg-gray-100">
+              <th className="border p-2">訂單編號</th>
+              <th className="border p-2">產品名稱</th>
+              <th className="border p-2">唯一—UID</th>
+              <th className="border p-2">價格</th>
+              <th className="border p-2">數量</th>
+              <th className="border p-2">購入時間</th>
+              <th className="border p-2">狀態</th>
+              <th className="border p-2">操作</th>
             </tr>
           </thead>
-            <tbody>
-              {orders.map((o) => {
-                // 1. 安全解析 items，如果为空则设为空对象
-                const itemData = (typeof o.items === 'string' ? JSON.parse(o.items) : o.items) || {};
-                
-                return (
-                  <tr key={o.id} className="border-b hover:bg-gray-50">
-                    <td className="p-4 text-xs font-mono border">{o.id.slice(0, 8)}</td>
-                    <td className="p-4 border">{itemData.name || '-'}</td>
-                    <td className="p-4 border">-</td> {/* 型号目前为空 */}
-                    
-                    <td className="p-4 font-mono border">{o.uid || '-'}</td>
-                    <td className="p-4 border">${Number(o.unit_price || 0).toLocaleString()}</td>
-                    <td className="p-4 border">1</td> {/* 强制显示数量为1 */}
-                    <td className="p-4 text-xs border">{new Date(o.created_at).toLocaleDateString()}</td>
-                    <td className="p-4 text-sm border">{o.status || 'pending'}</td>
-                    <td className="p-4 text-center border">
-                      <button 
-                        type="button"
-                        onClick={() => window.open(`/print-center?id=${o.id}&type=ownership`, '_blank')}
-                        className="bg-blue-600 text-white px-3 py-1 rounded text-xs hover:bg-blue-700 transition-colors"
-                      >
-                        打印產權證
-                      </button>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
+          <tbody>
+            {orders.map((order) => {
+              // 统一从 items 字段解析
+              let item: any = {};
+              try {
+                const parsed = typeof order.items === 'string' ? JSON.parse(order.items) : order.items;
+                item = Array.isArray(parsed) ? parsed[0] : parsed;
+              } catch (e) {
+                console.error("Parse error:", e);
+              }
+              
+              // 强制从 item 内部获取字段
+              const productName = item?.name || 'N/A';
+              // 这里修正：明确从 item 读取 unit_price 或 price
+              const price = item?.unit_price || item?.price || 0;
+
+              return (
+                <tr key={order.id} className="text-center hover:bg-gray-50">
+                  <td className="border p-2">{order.id.slice(0, 8)}</td>
+                  <td className="border p-2 font-medium text-blue-700">{productName}</td>
+                  <td className="border p-2">{order.uid || '-'}</td>
+                  <td className="border p-2">${Number(price).toLocaleString()}</td>
+                  <td className="border p-2">{order.quantity || 1}</td>
+                  <td className="border p-2">{new Date(order.created_at).toLocaleDateString()}</td>
+                  <td className="border p-2">{order.status || 'pending'}</td>
+                  <td className="border p-2">
+<Link 
+  href={`/print-center?id=${order.id}&type=ownership`}
+  // 在这里添加 target="_blank" 和 rel="noopener noreferrer"
+  target="_blank" 
+  rel="noopener noreferrer"
+  className="bg-black text-white px-3 py-1 rounded text-sm hover:bg-gray-800"
+>
+  打印產權證
+</Link>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
         </table>
-      )}
+      </div>
     </div>
   );
 }

@@ -1,10 +1,21 @@
 // components/templates/RepairTemplate.tsx
 import DocumentHeader from '../DocumentHeader';
 
-export default function RepairTemplate({ data }: { data: any }) {
+// 1. 定义 RepairData 接口
+export interface RepairData {
+  id: string;
+  product_name: string;
+  uid: string;
+  created_at: string;
+  status: string;
+  report?: string;
+  price?: number | string;
+}
+
+// 2. 将 data 类型从 any 修改为 RepairData
+export default function RepairTemplate({ data }: { data: RepairData }) {
   return (
     <div className="p-12 max-w-4xl mx-auto bg-white">
-      {/* 引用標準抬頭，與發票格式一致 */}
       <DocumentHeader title="維修報告" refNumber={data.id ? data.id.slice(0, 8) : 'N/A'} />
       
       <div className="grid grid-cols-2 gap-4 border-b pb-6 mb-6">

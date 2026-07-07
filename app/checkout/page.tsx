@@ -1,4 +1,3 @@
-// checkout/page.tsx 订单插入数据库orders表  2026-7-2
 'use client'
 
 import { useState, useEffect, Suspense } from 'react';
@@ -10,12 +9,35 @@ const supabase = createBrowserClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
 
+// 强类型定义
+interface ProductItem {
+  name: string;
+  description: string;
+  uid: string;
+  unit_price: number;
+}
+
+interface ProductRecord {
+  name: string;
+  price: number;
+  description: string;
+  image_url: string;
+  uid: string;
+  quantity: number;
+  status: string;
+}
+
+interface ProductState extends ProductRecord {
+  total_quantity: number;
+  all_items: ProductRecord[];
+}
+
 function CheckoutContent() {
   const searchParams = useSearchParams();
   const productName = searchParams.get('product');
 
-  const [product, setProduct] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+  const [product, setProduct] = useState<ProductState | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
     async function fetchProduct() {
@@ -31,11 +53,11 @@ function CheckoutContent() {
         .eq('status', 'available');
 
       if (data && data.length > 0) {
-        const totalStock = data.reduce((sum, item) => sum + (item.quantity || 0), 0);
+        const totalStock = data.reduce((sum: number, item: ProductRecord) => sum + (item.quantity || 0), 0);
         setProduct({ 
           ...data[0], 
           total_quantity: totalStock, 
-          all_items: data 
+          all_items: data as ProductRecord[]
         });
       }
       setLoading(false);
@@ -49,11 +71,20 @@ function CheckoutContent() {
       return;
     }
 
-    const targetItem = product.all_items.find((item: any) => item.status === 'available');
-    
-    // 1. 寫入訂單
+    const targetItem = product.all_items.find((item) => item.status === 'available');
+    if (!targetItem) return;
+
+    // 关键：构造完整的 items 结构
+    const itemsData: ProductItem[] = [{
+      name: product.name,
+      description: product.description,
+      uid: targetItem.uid,
+      unit_price: product.price
+    }];
+
+    // 1. 寫入訂單，items 现在存储的是完整对象
     const { error: orderError } = await supabase.from('orders').insert([{
-      items: { name: product.name },
+      items: itemsData,
       unit_price: product.price,
       quantity: 1,
       uid: targetItem.uid,

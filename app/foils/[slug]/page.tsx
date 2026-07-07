@@ -7,11 +7,18 @@ export default async function FoilDetailPage({ params }: { params: { slug: strin
   const { slug } = params;
 
   // 1. 查詢邏輯：確保使用 name 欄位匹配網址傳來的 slug
+  //const { data: product, error } = await supabase
+  //  .from('products')
+  //  .select('*')
+  //  .eq('name', decodeURIComponent(slug)) 
+    //.single();
+
   const { data: product, error } = await supabase
-    .from('products')
-    .select('*')
-    .eq('name', decodeURIComponent(slug)) 
-    .single();
+  .from('products')
+  .select('*')
+  .eq('name', decodeURIComponent(slug))
+  .limit(1)
+  .maybeSingle(); // 这会让 product 直接变成一个对象或者 null
 
   if (error || !product) {
     notFound();
