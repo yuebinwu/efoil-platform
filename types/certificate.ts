@@ -27,3 +27,4 @@ export interface CertificateData {
   transfers: TransferRecord[]; // 使用习惯命名
   repairs: RepairRecord[];     // 使用习惯命名
 }
+

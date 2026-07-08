@@ -1,23 +1,26 @@
-// app/components/Footer.tsx
+import { FaFacebook, FaInstagram } from 'react-icons/fa';
+import { MdEmail } from 'react-icons/md';
+
 export default function Footer() {
   return (
-    <footer className="py-16 bg-gray-900 text-white">
-      <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-3 gap-12 text-sm">
-        <div>
-          <h4 className="font-bold mb-4">關於 E-FOIL</h4>
-          <p className="text-gray-400">專注於極致的水上飛行體驗與碳纖維創新。</p>
-        </div>
-        <div>
-          <h4 className="font-bold mb-4">支援</h4>
-          <p className="text-gray-400">技術指導 / 售後維修 / 常見問題</p>
-        </div>
-        <div>
-          <h4 className="font-bold mb-4">聯絡我們</h4>
-          <p className="text-gray-400">support@efoil.com</p>
-        </div>
-      </div>
-      <div className="text-center mt-12 text-gray-500 text-xs border-t border-gray-800 pt-8">
-        © 2026 E-Foil Platform. All Rights Reserved.
+    <footer className="bg-black text-white p-10">
+      <div className="flex gap-6 items-center">
+        <span>聯絡我們：</span>
+        
+        {/* 邮箱 */}
+        <a href="mailto:certmapsy@gmail.com" className="hover:text-blue-400">
+          <MdEmail className="w-6 h-6" />
+        </a>
+
+        {/* Facebook */}
+        <a href="https://facebook.com" target="_blank" rel="noopener noreferrer" className="hover:text-blue-500">
+          <FaFacebook className="w-6 h-6" />
+        </a>
+
+        {/* Instagram */}
+        <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" className="hover:text-pink-500">
+          <FaInstagram className="w-6 h-6" />
+        </a>
       </div>
     </footer>
   );
