@@ -38,7 +38,7 @@ export default async function AccessoriesPage() {
 
   return (
     <div className="max-w-7xl mx-auto p-6">
-      <h1 className="text-3xl font-bold mb-8">配件系列 (当前共 {uniqueItems.length} 个)</h1>
+      <h1 className="text-3xl font-bold mb-8">Accessories ( {uniqueItems.length} items)</h1>
       
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
         {uniqueItems.map((item: Accessory) => {
@@ -56,7 +56,7 @@ export default async function AccessoriesPage() {
                 href={`/accessories/${item.name}`} 
                 className="mt-auto w-full bg-black text-white text-center py-2 rounded-lg hover:bg-gray-800 transition"
               >
-                查看詳情
+                Learn More
               </Link>
             </div>
           );

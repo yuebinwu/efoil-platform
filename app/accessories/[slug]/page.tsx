@@ -14,7 +14,7 @@ export default async function AccessoryDetailPage({ params }: { params: { slug: 
     .eq('name', decodeURIComponent(slug));
 
   if (error || !items || items.length === 0) {
-    return <div className="p-10 text-center text-red-500">找不到配件或資料讀取錯誤</div>;
+    return <div className="p-10 text-center text-red-500">Product not found / Failed to load</div>;
   }
 
   // 计算逻辑与板子页完全一致：只统计 available 的库存
@@ -35,15 +35,15 @@ export default async function AccessoryDetailPage({ params }: { params: { slug: 
 
       <div className="flex flex-col">
         <h1 className="text-4xl font-bold mb-4">{item.name}</h1>
-        <p className="text-gray-600 mb-6">{item.description || "暫無詳細描述"}</p>
+        <p className="text-gray-600 mb-6">{item.description || "No description available"}</p>
         
         {/* 精准库存显示 */}
         <div className="text-xl mb-4 font-semibold text-gray-800">
-           庫存數量: {totalAvailableQuantity > 0 ? totalAvailableQuantity : <span className="text-red-500">已售罄</span>}
+           Stock: {totalAvailableQuantity > 0 ? totalAvailableQuantity : <span className="text-red-500">已售罄</span>}
         </div>
 
         <div className="text-2xl font-bold text-blue-600 mb-6">
-            價格: ${item.price || "請諮詢"}
+            Price: ${item.price || "Contact us for details"}
         </div>
         
         {/* 保持与板子页一致：跳转到 /checkout 页面进行下单 */}
@@ -52,11 +52,11 @@ export default async function AccessoryDetailPage({ params }: { params: { slug: 
             href={`/checkout?product=${encodeURIComponent(item.name)}`} 
             className="bg-black text-white px-6 py-3 rounded-lg hover:bg-gray-800 transition text-center"
           >
-            立即購買
+            Buy Now
           </Link>
         ) : (
           <button disabled className="bg-gray-400 text-white px-6 py-3 rounded-lg cursor-not-allowed">
-            已售罄
+            Out of stock
           </button>
         )}
       </div>

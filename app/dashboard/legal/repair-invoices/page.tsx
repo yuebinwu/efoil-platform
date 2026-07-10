@@ -1,67 +1,103 @@
 'use client';
+
 import { useEffect, useState } from 'react';
 import { createBrowserClient } from '@supabase/ssr';
 
-export default function RepairInvoicesPage() {
-  const [repairs, setRepairs] = useState<any[]>([]);
+// 定义明确的数据接口，彻底移除 any
+interface ItemData {
+  name?: string;
+  description?: string;
+  uid?: string;
+  unit_price?: number;
+}
+
+interface InvoiceOrder {
+  id: string;
+  created_at: string;
+  status: string;
+  uid?: string;
+  unit_price: number;
+  quantity?: number;
+  // 数据库 items 可能是数组或对象，在此进行兼容处理
+  items: ItemData[] | ItemData | null;
+}
+
+export default function InvoicesPage() {
+  const [orders, setOrders] = useState<InvoiceOrder[]>([]);
   const supabase = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   );
 
   useEffect(() => {
-    const fetchRepairs = async () => {
-      // 確保我們從 'repairs' 表獲取資料，這樣欄位才會有狀態與時間
-      const { data, error } = await supabase
-        .from('repairs')
+    const fetchInvoices = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data } = await supabase
+        .from('orders')
         .select('*')
+        .eq('user_id', user.id)
         .order('created_at', { ascending: false });
-      
-      if (!error) setRepairs(data || []);
-      else console.error("資料獲取錯誤:", error);
+
+      if (data) setOrders(data as InvoiceOrder[]);
     };
-    fetchRepairs();
-  }, []);
+    fetchInvoices();
+  }, [supabase]);
+
+  // 安全提取 item 详情的辅助函数
+  const getItemDetails = (items: InvoiceOrder['items']) => {
+    if (!items) return { name: '-', description: '-' };
+    
+    // 如果是数组，取第一个元素
+    const item = Array.isArray(items) ? items[0] : items;
+    return {
+      name: item.name || '-',
+      description: item.description || '-'
+    };
+  };
 
   return (
     <div className="p-8">
-      <h1 className="text-2xl font-bold mb-6">維修單管理</h1>
-      <table className="w-full bg-white rounded-2xl shadow-sm border border-gray-100">
+      <h1 className="text-2xl font-bold mb-6">Invoices</h1>
+      <table className="w-full text-left border">
         <thead>
-          <tr className="border-b border-gray-100 text-left">
-            <th className="p-4 text-xs font-bold text-gray-400 uppercase">產品名稱</th>
-            <th className="p-4 text-xs font-bold text-gray-400 uppercase">UID</th>
-            <th className="p-4 text-xs font-bold text-gray-400 uppercase">申請日期</th>
-            <th className="p-4 text-xs font-bold text-gray-400 uppercase">狀態</th>
-            <th className="p-4 text-xs font-bold text-gray-400 uppercase text-center">操作</th>
+          <tr className="bg-gray-50 border-b">
+            <th className="p-4">Order ID</th>
+            <th className="p-4">Product Name</th>
+            <th className="p-4">Description</th>
+            <th className="p-4">Unique UID</th>
+            <th className="p-4">Price</th>
+            <th className="p-4">Quantity</th>
+            <th className="p-4">Date</th>
+            <th className="p-4">Status</th>
+            <th className="p-4 text-center">Action</th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-gray-50">
-          {repairs.length > 0 ? (
-            repairs.map((r) => (
-              <tr key={r.id}>
-                <td className="p-4 font-bold text-gray-800">{r.product_name}</td>
-                <td className="p-4 text-xs font-mono text-gray-500">{r.uid}</td>
-                <td className="p-4 text-gray-600">{r.created_at ? new Date(r.created_at).toLocaleDateString() : '-'}</td>
-                <td className="p-4">
-                   <span className="px-2 py-1 rounded text-xs bg-gray-100 text-gray-700">{r.status || 'Pending'}</span>
-                </td>
+        <tbody>
+          {orders.map((o) => {
+            const { name, description } = getItemDetails(o.items);
+            return (
+              <tr key={o.id} className="border-b hover:bg-gray-50">
+                <td className="p-4 text-xs font-mono">{o.id.slice(0, 8)}</td>
+                <td className="p-4">{name}</td>
+                <td className="p-4 text-xs">{description}</td>
+                <td className="p-4 font-mono">{o.uid || '-'}</td>
+                <td className="p-4">${Number(o.unit_price || 0).toLocaleString()}</td>
+                <td className="p-4">{o.quantity || 1}</td>
+                <td className="p-4 text-xs">{new Date(o.created_at).toLocaleDateString()}</td>
+                <td className="p-4 text-sm capitalize">{o.status || 'pending'}</td>
                 <td className="p-4 text-center">
-                    <button 
-                    onClick={() => {
-                        // 確保這裡傳遞的是該維修記錄的唯一 ID
-                        window.open(`/print-center?id=${r.id}&type=repair`, '_blank');
-                    }}
-                    className="bg-black text-white px-4 py-1.5 rounded-lg text-xs font-bold hover:bg-gray-800 transition-colors"
-                    >
-                    打印維修單
-                    </button>
+                  <button 
+                    onClick={() => window.open(`/print-center?id=${o.id}&type=invoice`, '_blank')}
+                    className="bg-black text-white px-3 py-1 rounded text-xs hover:bg-gray-800 transition"
+                  >
+                    View Invoice
+                  </button>
                 </td>
               </tr>
-            ))
-          ) : (
-            <tr><td colSpan={5} className="p-8 text-center text-gray-500">目前沒有可打印的維修單記錄</td></tr>
-          )}
+            );
+          })}
         </tbody>
       </table>
     </div>

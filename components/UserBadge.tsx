@@ -1,10 +1,12 @@
 "use client";
+
 import { useEffect, useState } from 'react';
 import { createBrowserClient } from '@supabase/ssr';
+import { User } from '@supabase/supabase-js'; // 明确导入 User 类型
 
 export default function UserBadge() {
-  const [user, setUser] = useState<any>(null);
-  const [role, setRole] = useState<string>('guest'); // 預設值
+  const [user, setUser] = useState<User | null>(null); // 使用 User 类型
+  const [role, setRole] = useState<string>('guest');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -16,7 +18,6 @@ export default function UserBadge() {
     supabase.auth.getUser().then(({ data }) => {
       if (data.user) {
         setUser(data.user);
-        // 假設您的 user table 有 role 欄位
         supabase.from('profiles').select('role').eq('id', data.user.id).single().then(({ data: profile }) => {
           if (profile) setRole(profile.role);
         });
@@ -25,13 +26,15 @@ export default function UserBadge() {
     });
   }, []);
 
-  // 不再 return null，而是顯示佔位符，確保導航區塊結構完整
-  if (loading) return <div className="p-2 text-sm text-gray-300 animate-pulse">載入中...</div>;
-  if (!user) return <div className="p-2 text-sm text-red-400">未登入</div>;
+  if (loading) return <div className="p-2 text-sm text-gray-300 animate-pulse">Loading...</div>;
+  if (!user) return <div className="p-2 text-sm text-red-400">Not signed in</div>;
 
-  return (
+return (
     <div className="pt-2">
-      <div className="text-xs text-gray-400 mb-1">當前帳號</div>
+      {/* 调整后的样式：与下方导航栏标题完全统一 */}
+      <div className="text-sm font-bold text-gray-800 uppercase tracking-wider mb-2">
+        Current account
+      </div>
       <div className="text-sm font-medium text-gray-700 mb-2 truncate">{user.email}</div>
       <div className="px-2 py-0.5 bg-gray-900 text-white rounded text-[10px] font-bold uppercase inline-block">
         {role}

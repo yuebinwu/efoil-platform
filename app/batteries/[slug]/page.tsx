@@ -1,57 +1,62 @@
-import { supabase } from '@/lib/supabase';
-import { notFound } from 'next/navigation';
+// app/batteries/[slug]/page.tsx
+import { createClient } from '@/lib/supabase-server';
 import Link from 'next/link';
 
 export default async function BatteryDetailPage({ params }: { params: { slug: string } }) {
-  const { slug } = params;
+  const { slug } = await params;
+  const supabase = await createClient();
 
-  // 1. 使用与 foils 页面完全相同的查询逻辑
-  const { data: product, error } = await supabase
+  const { data: batteries, error } = await supabase
     .from('products')
     .select('*')
-    .eq('name', decodeURIComponent(slug))
-    .limit(1)
-    .maybeSingle(); 
+    .eq('name', decodeURIComponent(slug));
 
-  // 2. 如果查询失败或没有数据，触发 404
-  if (error || !product) {
-    notFound();
+  if (error || !batteries || batteries.length === 0) {
+    return <div className="p-10 text-center text-red-500">No description available / Error loading details</div>;
   }
 
+  // 统一库存逻辑：只计算 available 状态的库存
+  const totalAvailableQuantity = batteries.reduce((sum, b) => {
+    return b.status === 'available' ? sum + (b.quantity || 0) : sum;
+  }, 0);
+
+  const battery = batteries[0];
+  const { data: imageData } = supabase.storage
+    .from('product-images')
+    .getPublicUrl(`public/${battery.name}.jpg`);
+
   return (
-    <div className="max-w-6xl mx-auto p-6">
-      <h1 className="text-4xl font-bold mb-10">{product.name}</h1>
-      
-      <div className="flex flex-col md:flex-row gap-12">
-        {/* 左側：圖片 */}
-        <div className="w-full md:w-1/2">
-          <div className="bg-gray-100 rounded-lg overflow-hidden shadow-md">
-            <img 
-              src={product.image_url} 
-              alt={product.name} 
-              className="w-full h-auto object-cover rounded-lg"
-            />
-          </div>
+    <div className="max-w-6xl mx-auto p-10 grid grid-cols-1 md:grid-cols-2 gap-10">
+      <div>
+        <img src={imageData.publicUrl} alt={battery.name} className="w-full rounded-lg shadow-lg" />
+      </div>
+
+      <div className="flex flex-col">
+        <h1 className="text-4xl font-bold mb-4">{battery.name}</h1>
+        <p className="text-gray-600 mb-6">{battery.description || "No description available"}</p>
+        
+        {/* 显示库存 */}
+        <div className="text-xl mb-4 font-semibold text-gray-800">
+            Stock: {totalAvailableQuantity > 0 ? totalAvailableQuantity : <span className="text-red-500">Out of stock</span>}
         </div>
 
-        {/* 右側：說明與價格 */}
-        <div className="w-full md:w-1/2 flex flex-col pt-2">
-          <h2 className="text-2xl font-semibold mb-4">產品說明</h2>
-          <p className="text-lg text-gray-700 mb-6 leading-relaxed">
-            {product.description || "此產品暫無詳細說明。"}
-          </p>
-          
-          <div className="mt-auto">
-            <p className="text-4xl font-bold text-black mb-8">${product.price}</p>
-            
-            <Link 
-              href={`/checkout?product=${encodeURIComponent(product.name)}`}
-              className="block w-full md:w-auto text-center bg-black text-white px-10 py-4 rounded-lg hover:bg-gray-800 transition shadow-lg text-lg"
-            >
-              立即購買
-            </Link>
-          </div>
+        <div className="text-2xl font-bold text-blue-600 mb-6">
+            Price: ${battery.price || " Contact us"}
         </div>
+        
+        {/* 购买按钮逻辑 */}
+        {totalAvailableQuantity > 0 ? (
+          <Link 
+            href={`/checkout?product=${encodeURIComponent(battery.name)}`} 
+            className="bg-black text-white px-6 py-3 rounded-lg hover:bg-gray-800 transition text-center"
+          >
+            Buy now
+          </Link>
+        ) : (
+          <button disabled className="bg-gray-400 text-white px-6 py-3 rounded-lg cursor-not-allowed">
+            Out of stock
+          </button>
+        )}
       </div>
     </div>
   );

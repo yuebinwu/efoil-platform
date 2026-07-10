@@ -23,7 +23,7 @@ export default async function MotorDetailPage({ params }: { params: { slug: stri
     .eq('name', decodeURIComponent(slug));
 
   if (error || !motors || motors.length === 0) {
-    return <div className="p-10 text-center text-red-500">找不到電機或資料讀取錯誤</div>;
+    return <div className="p-10 text-center text-red-500"> / Error loading details</div>;
   }
 
   // 核心逻辑：只统计 status 为 'available' 的库存，严谨计算
@@ -46,15 +46,15 @@ export default async function MotorDetailPage({ params }: { params: { slug: stri
       {/* 右侧：统一的5项信息 */}
       <div className="flex flex-col">
         <h1 className="text-4xl font-bold mb-4">{motor.name}</h1>
-        <p className="text-gray-600 mb-6">{motor.description || "暫無詳細描述"}</p>
+        <p className="text-gray-600 mb-6">{motor.description || "No description available"}</p>
         
         {/* 精准库存显示 */}
         <div className="text-xl mb-4 font-semibold text-gray-800">
-           庫存數量: {totalAvailableQuantity > 0 ? totalAvailableQuantity : <span className="text-red-500">已售罄</span>}
+           Stock: {totalAvailableQuantity > 0 ? totalAvailableQuantity : <span className="text-red-500">Out of stock</span>}
         </div>
 
         <div className="text-2xl font-bold text-blue-600 mb-6">
-            價格: ${motor.price || "請諮詢"}
+            Price: ${motor.price || "Contact us for details"}
         </div>
         
         {/* 统一跳转到 /checkout 页面 */}
@@ -63,11 +63,11 @@ export default async function MotorDetailPage({ params }: { params: { slug: stri
             href={`/checkout?product=${encodeURIComponent(motor.name)}`} 
             className="bg-black text-white px-6 py-3 rounded-lg hover:bg-gray-800 transition text-center"
           >
-            立即購買
+            Buy now
           </Link>
         ) : (
           <button disabled className="bg-gray-400 text-white px-6 py-3 rounded-lg cursor-not-allowed">
-            已售罄
+            Out of stock
           </button>
         )}
       </div>

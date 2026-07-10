@@ -21,7 +21,7 @@ export default async function FoilsPage() {
     .eq('category', 'foils');
 
   if (error || !allItems) {
-    return <div className="p-10 text-center text-red-500">无法加载水翼列表</div>;
+    return <div className="p-10 text-center text-red-500">Failed to load foils</div>;
   }
 
   // 严格按 name 去重，防止数据库冗余数据导致重复渲染
@@ -35,7 +35,7 @@ export default async function FoilsPage() {
 
   return (
     <div className="max-w-7xl mx-auto p-6">
-      <h1 className="text-3xl font-bold mb-8">專業水翼系列</h1>
+      <h1 className="text-3xl font-bold mb-8">Foils</h1>
       
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
         {uniqueItems.map((item: Product) => {
@@ -56,7 +56,7 @@ export default async function FoilsPage() {
                 href={`/foils/${item.name}`} 
                 className="mt-auto w-full bg-black text-white text-center py-2 rounded-lg hover:bg-gray-800 transition"
               >
-                查看詳情
+                Learn more
               </Link>
             </div>
           );

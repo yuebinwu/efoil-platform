@@ -67,7 +67,7 @@ function CheckoutContent() {
 
   async function handlePurchase() {
     if (!product || product.total_quantity <= 0) {
-      alert("庫存不足");
+      alert("Insufficient Stock");
       return;
     }
 
@@ -92,7 +92,7 @@ function CheckoutContent() {
     }]);
 
     if (orderError) {
-      alert("訂單建立失敗: " + orderError.message);
+      alert("Order failed: " + orderError.message);
       return;
     }
 
@@ -103,15 +103,15 @@ function CheckoutContent() {
       .eq('uid', targetItem.uid);
 
     if (updateError) {
-      alert("庫存扣除失敗: " + updateError.message);
+      alert("Failed to update stock: " + updateError.message);
     } else {
-      alert("下單成功！");
+      alert("Order Confirmed");
       window.location.reload();
     }
   }
 
-  if (loading) return <div className="p-10 text-center">載入中...</div>;
-  if (!product) return <div className="p-10 text-center">該產品已售罄或不存在</div>;
+  if (loading) return <div className="p-10 text-center">Loading...</div>;
+  if (!product) return <div className="p-10 text-center">No description available / Out of stock</div>;
 
   return (
     <div className="p-10 w-full flex justify-center">
@@ -121,14 +121,14 @@ function CheckoutContent() {
         </div>
         <div className="w-1/2 pt-4">
           <h1 className="text-3xl font-bold mb-4">{product.name}</h1>
-          <p className="text-xl text-gray-700 mb-2">總庫存: {product.total_quantity}</p>
-          <p className="text-2xl font-bold mb-4">價格: {product.price}</p>
+          <p className="text-xl text-gray-700 mb-2">Stock: {product.total_quantity}</p>
+          <p className="text-2xl font-bold mb-4">Price: {product.price}</p>
           <p className="text-gray-600 mb-8">{product.description}</p>
           <button 
             className="bg-black text-white px-12 py-3 rounded hover:bg-gray-800 transition-colors" 
             onClick={handlePurchase}
           >
-            確認下單
+            Confirm Order
           </button>
         </div>
       </div>
@@ -138,7 +138,7 @@ function CheckoutContent() {
 
 export default function CheckoutPage() {
   return (
-    <Suspense fallback={<div className="p-10 text-center">載入中...</div>}>
+    <Suspense fallback={<div className="p-10 text-center">Loading...</div>}>
       <CheckoutContent />
     </Suspense>
   );

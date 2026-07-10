@@ -12,7 +12,7 @@ export default async function BoardDetailPage({ params }: { params: { slug: stri
     .eq('name', decodeURIComponent(slug));
 
   if (error || !boards || boards.length === 0) {
-    return <div className="p-10 text-center text-red-500">找不到產品或資料讀取錯誤</div>;
+    return <div className="p-10 text-center text-red-500">No description available / Error loading details</div>;
   }
 
   // 确保库存逻辑一致：只计算 available 状态的库存
@@ -33,15 +33,15 @@ export default async function BoardDetailPage({ params }: { params: { slug: stri
 
       <div className="flex flex-col">
         <h1 className="text-4xl font-bold mb-4">{board.name}</h1>
-        <p className="text-gray-600 mb-6">{board.description || "暫無詳細描述"}</p>
+        <p className="text-gray-600 mb-6">{board.description || "Failed to load boards"}</p>
         
         {/* 显示库存 */}
         <div className="text-xl mb-4 font-semibold text-gray-800">
-           庫存數量: {totalAvailableQuantity > 0 ? totalAvailableQuantity : <span className="text-red-500">已售罄</span>}
+           Stock: {totalAvailableQuantity > 0 ? totalAvailableQuantity : <span className="text-red-500">Out of stock</span>}
         </div>
 
         <div className="text-2xl font-bold text-blue-600 mb-6">
-            價格: ${board.price || "請諮詢"}
+            Price: ${board.price || " Contact us"}
         </div>
         
         {/* 统一改为跳转到 /checkout 页 */}
@@ -50,11 +50,11 @@ export default async function BoardDetailPage({ params }: { params: { slug: stri
             href={`/checkout?product=${encodeURIComponent(board.name)}`} 
             className="bg-black text-white px-6 py-3 rounded-lg hover:bg-gray-800 transition text-center"
           >
-            立即購買
+            Buy now
           </Link>
         ) : (
           <button disabled className="bg-gray-400 text-white px-6 py-3 rounded-lg cursor-not-allowed">
-            已售罄
+            Out of stock
           </button>
         )}
       </div>
