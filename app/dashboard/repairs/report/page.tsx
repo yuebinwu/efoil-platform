@@ -1,10 +1,9 @@
-//2026-6-26  ok
+//
 'use client';
 import { Suspense, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { createBrowserClient } from '@supabase/ssr';
 
-// 1. 將所有邏輯放在這個元件中
 function ReportContent() {
   const searchParams = useSearchParams();
   const id = searchParams.get('id');
@@ -22,11 +21,16 @@ function ReportContent() {
     e.preventDefault();
     if (!id) return;
 
+    // 1. 获取当前登录用户的 ID (即维修人)
+    const { data: { user } } = await supabase.auth.getUser();
+
+    // 2. 提交数据，同时绑定 assigned_to
     const { error } = await supabase
       .from('repairs')
       .update({
         repair_description: description,
-        repair_cost: cost,
+        repair_cost: parseFloat(cost), // 确保费用为数值类型
+        assigned_to: user?.id,        // 自动绑定当前填报人的 ID
         status: 'Completed',
         completed_at: new Date().toISOString()
       })
@@ -35,7 +39,7 @@ function ReportContent() {
     if (error) {
       alert("提交失敗: " + error.message);
     } else {
-      alert("報告已提交，維修流程結束！");
+      alert("報告已提交，責任人已綁定，維修流程結束！");
       router.push('/dashboard/repairs/technician');
     }
   };
@@ -58,6 +62,7 @@ function ReportContent() {
           <label className="block text-sm font-bold mb-2">維修費用</label>
           <input 
             type="number"
+            step="0.01"
             className="w-full border p-2 rounded-lg"
             value={cost}
             onChange={(e) => setCost(e.target.value)}
@@ -72,7 +77,6 @@ function ReportContent() {
   );
 }
 
-// 2. 必須使用 Suspense 包裹，這是解決「頁面卡住/轉圈」的關鍵
 export default function ReportPage() {
   return (
     <Suspense fallback={<div className="p-10">載入中...</div>}>

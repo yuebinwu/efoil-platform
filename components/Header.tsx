@@ -5,7 +5,6 @@ import { createClient } from '@/lib/supabase-client';
 import { useRouter } from 'next/navigation';
 
 export default function Header() {
-  
   const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
   const router = useRouter();
   const supabase = createClient();
@@ -29,9 +28,22 @@ export default function Header() {
     router.refresh();
   };
 
+  const openExternalSite = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    e.preventDefault();
+    window.open('https://www.certmapsys.com', '_blank', 'noopener,noreferrer');
+  };
+
   return (
     <header className="flex justify-between items-center py-6 px-10 border-b border-gray-100 bg-white">
-      <Link href="/" className="text-xl font-bold">Certmapsys E-FOIL</Link>
+      {/* 採用 JS window.open 強制開啟新分頁 */}
+      <a 
+        href="https://www.certmapsys.com" 
+        onClick={openExternalSite}
+        className="text-xl font-bold hover:opacity-80 transition cursor-pointer"
+      >
+        Certmapsys Battery IQ
+      </a>
+
       <nav className="flex gap-6 text-sm font-medium">
         <Link href="/about">About</Link>
         <Link href="/boards">Board</Link>
@@ -40,11 +52,21 @@ export default function Header() {
         <Link href="/batteries">Battery</Link>
         <Link href="/accessories">Accessory</Link>
       </nav>
+
       <div className="flex items-center gap-4 text-sm font-medium">
-        {isLoggedIn === null ? <div className="w-20" /> : isLoggedIn ? (
+        {isLoggedIn === null ? (
+          <div className="w-20" />
+        ) : isLoggedIn ? (
           <>
-            <Link href="/dashboard" className="text-black font-bold border-b-2 border-black">Dashboard</Link>
-            <button onClick={handleLogout} className="text-gray-500 hover:text-red-600 transition">Sign out</button>
+            <Link href="/dashboard" className="text-black font-bold border-b-2 border-black">
+              Dashboard
+            </Link>
+            <button 
+              onClick={handleLogout} 
+              className="text-gray-500 hover:text-red-600 transition"
+            >
+              Sign out
+            </button>
           </>
         ) : (
           <>
@@ -52,7 +74,9 @@ export default function Header() {
             <Link href="/register" className="hover:text-gray-500">Register</Link>
           </>
         )}
-        <Link href="/cart" className="bg-black text-white px-5 py-2 rounded-full">Shop</Link>
+        <Link href="/cart" className="bg-black text-white px-5 py-2 rounded-full">
+          Shop
+        </Link>
       </div>
     </header>
   );
